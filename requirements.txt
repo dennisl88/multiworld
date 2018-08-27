@@ -1,0 +1,5 @@
+mujoco_py==1.50
+numpy
+gym==0.10.5
+matplotlib
+Pillow
