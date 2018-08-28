@@ -8,7 +8,7 @@
             <inertial pos="0 0 0" mass=".1" diaginertia="100000 100000 100000"/>
             <geom name="objbox" type="sphere" pos="0 0 0"
                   size="0.015" rgba=".1 .1 .9 1"
-                  contype="7" conaffinity="7" friction="10.0 0.10 0.002" condim="4" mass=1.0
+                  contype="7" conaffinity="7" friction="10.0 0.10 0.002" condim="4" mass="1.0"
             />
             <site name="obj" pos="0 0 0" size="0.01" />
         </body>
