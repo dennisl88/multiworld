@@ -13,6 +13,7 @@ setup(name="multiworld",
         'gym>=0.10',
         'matplotlib',
         'Pillow',
+        'pyquaternion'
       ],
       package_data={'multiworld': [
         'envs/assets/classic_mujoco/*.xml',
