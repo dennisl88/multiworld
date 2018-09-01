@@ -9,14 +9,13 @@ from multiworld.core.multitask_env import MultitaskEnv
 from multiworld.envs.mujoco.sawyer_xyz.base import SawyerXYZEnv
 
 
-class SawyerPickPlaceEnv( SawyerXYZEnv):
+class SawyerPickPlaceEnv(SawyerXYZEnv):
     def __init__(
             self,
-            obj_low=None,
-            obj_high=None,
-            tasks = [{'goal': np.array([0, 0.7, 0.02]), 'height': 0.06, 'obj_init_pos':np.array([0, 0.6, 0.02])}] , 
-            goal_low=None,
-            goal_high=None,
+            obj_low=(-0.2, 0.5, 0.02),
+            obj_high=(0.2, 0.7, 0.02),
+            goal_low=(-0.2, 0.5, 0.1),
+            goal_high=(0.2, 0.7, 0.1),
             hand_init_pos = (0, 0.4, 0.05),
             liftThresh = 0.04,
             rewMode = 'orig',
@@ -31,17 +30,10 @@ class SawyerPickPlaceEnv( SawyerXYZEnv):
             model_name=self.model_name,
             **kwargs
         )
-        if obj_low is None:
-            obj_low = self.hand_low
-
-        if goal_low is None:
-            goal_low = self.hand_low
-
-        if obj_high is None:
-            obj_high = self.hand_high
-        
-        if goal_high is None:
-            goal_high = self.hand_high
+        obj_low = np.array(obj_low)
+        obj_high = np.array(obj_high)
+        goal_low = np.array(goal_low)
+        goal_high = np.array(goal_high)
 
         self.liftThresh = liftThresh
 
@@ -59,6 +51,8 @@ class SawyerPickPlaceEnv( SawyerXYZEnv):
             np.hstack((self.hand_low, obj_low)),
             np.hstack((self.hand_high, obj_high)),
         )
+
+        self.obj_space = Box(obj_low, obj_high)
 
         self.goal_space = Box(goal_low, goal_high)
 
@@ -142,38 +136,45 @@ class SawyerPickPlaceEnv( SawyerXYZEnv):
         self.set_state(qpos, qvel)
 
     def sample_goals(self, batch_size):
-        #Required by HER-TD3
-     
-        goals = []
+        goals = np.random.uniform(
+            self.goal_space.low,
+            self.goal_space.high,
+            size=(batch_size, self.goal_space.low.size),
+        )
+        obj_poss = np.random.uniform(
+            self.obj_space.low,
+            self.obj_space.high,
+            size=(batch_size, self.obj_space.low.size),
+        )
+        return [{
+            'state_desired_goal': goal,
+            'obj_init_pos': obj_pos
+        } for goal, obj_pos in zip(goals, obj_poss)]
 
-        for i in range(batch_size):           
-            task = self.tasks[np.random.randint(0, self.num_tasks)]
-            goals.append(task['goal'])
+    def set_goal(self, goal):
+        self._state_goal = goal['state_desired_goal']
+        self._set_goal_marker(self._state_goal)
+        self.obj_init_pos = self.adjust_initObjPos(goal['obj_init_pos'])
+
+    def get_goal(self):
         return {
-            'state_desired_goal': goals,
+            'state_desired_goal': self._state_goal,
+            'obj_init_pos': self.obj_init_pos,
         }
 
-
-    def sample_task(self):
-        task_idx = np.random.randint(0, self.num_tasks)
-        return self.tasks[task_idx]    
-
     def adjust_initObjPos(self, orig_init_pos):
-        #This is to account for meshes for the geom and object are not aligned
-        #If this is not done, the object could be initialized in an extreme position
+        # Dennis: What is this doing?
+        # This is to account for meshes for the geom and object are not aligned
+        # If this is not done, the object could be initialized in an extreme position
         diff = self.get_body_com('obj')[:2] - self.data.get_geom_xpos('objGeom')[:2]
         adjustedPos = orig_init_pos[:2] + diff
-        #The convention we follow is that body_com[2] is always 0, and geom_pos[2] is the object height
+        # The convention we follow is that body_com[2] is always 0, and geom_pos[2] is the object height
         return [adjustedPos[0], adjustedPos[1],0]
 
     def reset_model(self):
         self._reset_hand()
-        task = self.sample_task()
-        self._state_goal = np.array(task['goal'])
         self._set_goal_marker(self._state_goal)
-        self.obj_init_pos = self.adjust_initObjPos(task['obj_init_pos'])
         self._set_obj_xyz(self.obj_init_pos)
-        self.curr_path_length = 0
         self.pickCompleted = False
         self.maxPlacingDist = np.linalg.norm(np.array([self.obj_init_pos[0], self.obj_init_pos[1], self.heightTarget]) - np.array(self._state_goal)) + self.heightTarget
         return self._get_obs()
