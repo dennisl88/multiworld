@@ -1,7 +1,6 @@
 from collections import OrderedDict
 import numpy as np
 from gym.spaces import Box, Dict
-
 from multiworld.envs.env_util import get_stat_in_paths, \
     create_stats_ordered_dict, get_asset_full_path
 from multiworld.core.multitask_env import MultitaskEnv
@@ -14,23 +13,13 @@ class SawyerDoorOpenEnv(SawyerXYZEnv):
             self,
             doorGrasp_low=None,
             doorGrasp_high=None,
-
-            tasks = [{'goalAngle': [0.5236],  'door_init_pos':[0, 0.2, 0.2]}] , 
-
             goal_low= np.array([0]),
             goal_high=np.array([1.58825]),
-
             hand_init_pos = (0, 0.4, 0.05),
-            #hand_init_pos = (0, 0.5, 0.35) ,
-
             doorHalfWidth = 0.2,
-           
             **kwargs
     ):
-
-    
-        self.quick_init(locals())
-       
+        self.quick_init(locals()) 
         SawyerXYZEnv.__init__(
             self,
             model_name=self.model_name,
@@ -41,18 +30,7 @@ class SawyerDoorOpenEnv(SawyerXYZEnv):
         if doorGrasp_high is None:
             doorGrasp_high = self.hand_high
 
-        
-
-        self.max_path_length = 150
-
         self.doorHalfWidth = doorHalfWidth
-
-
-        self.tasks = tasks
-        self.num_tasks = len(tasks)
-
-
-      
         self.action_space = Box(
             np.array([-1, -1, -1, -1]),
             np.array([1, 1, 1, 1]),
@@ -63,18 +41,12 @@ class SawyerDoorOpenEnv(SawyerXYZEnv):
             np.hstack((self.hand_high, doorGrasp_high)),
             dtype = np.float32
         )
-
-       
-
         self.goal_space = Box(goal_low, goal_high)
-
-
         self.observation_space = Dict([
             ('state_observation', self.hand_and_door_space),
             ('desired_goal', self.goal_space),
             
         ])
-
         self.reset()
 
     @property

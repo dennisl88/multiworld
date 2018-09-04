@@ -1,8 +1,6 @@
 from collections import OrderedDict
 import numpy as np
 from gym.spaces import  Dict , Box
-
-
 from multiworld.envs.env_util import get_stat_in_paths, \
     create_stats_ordered_dict, get_asset_full_path
 from multiworld.core.multitask_env import MultitaskEnv
@@ -14,8 +12,8 @@ class SawyerPickPlaceEnv(SawyerXYZEnv):
             self,
             obj_low=(-0.2, 0.5, 0.02),
             obj_high=(0.2, 0.7, 0.02),
-            goal_low=(-0.2, 0.5, 0.1),
-            goal_high=(0.2, 0.7, 0.1),
+            goal_low=(-0.2, 0.5, 0.02),
+            goal_high=(0.2, 0.7, 0.02),
             hand_init_pos = (0, 0.4, 0.05),
             liftThresh = 0.04,
             rewMode = 'orig',
@@ -61,11 +59,6 @@ class SawyerPickPlaceEnv(SawyerXYZEnv):
             ('state_desired_goal', self.goal_space),
             ('state_achieved_goal', self.goal_space),
         ])
-
-    def get_goal(self):
-        return {
-            'state_desired_goal': self._state_goal,
-        }
 
     @property
     def model_name(self):
@@ -263,11 +256,11 @@ class SawyerPickPlaceEnv(SawyerXYZEnv):
         reachRew, reachDist = reachReward()
         if self.rewMode == 'orig':
             pickRew = orig_pickReward()
-            placeRew , placingDist = placeReward(cond = (graspDist < 0.1) and not(objDropped()))
+            placeRew , placingDist = placeReward(cond = self.pickCompleted and (graspDist < 0.1) and not(objDropped()))
         else:
             assert(self.rewMode == 'general')
             pickRew = general_pickReward()
-            placeRew , placingDist = placeReward(cond = grasped())
+            placeRew , placingDist = placeReward(cond = self.pickCompleted and grasped())
 
         assert ((placeRew >=0) and (pickRew>=0))
         reward = reachRew + pickRew + placeRew
