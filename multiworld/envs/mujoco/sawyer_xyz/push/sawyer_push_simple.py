@@ -5,16 +5,25 @@ from multiworld.envs.env_util import get_stat_in_paths, \
     create_stats_ordered_dict, get_asset_full_path
 from multiworld.envs.mujoco.sawyer_xyz.base import SawyerRandGoalEnv
 
-class SawyerPushEnv(SawyerRandGoalEnv):
+class SawyerPushSimpleEnv(SawyerRandGoalEnv):
     def __init__(
             self,
-            rewMode='posPlace',
+            obj_low=(-0.1, 0.5, 0.02),
+            obj_high=(0.1, 0.5, 0.02),
+            goal_low=(-0.2, 0.7, 0.02),
+            goal_high=(0.2, 0.7, 0.02),
+            hand_init_pos = (0, 0.4, 0.05),
+            rewMode='angle',
             **kwargs
     ):
         self.quick_init(locals())
         
         SawyerRandGoalEnv.__init__(
             self,
+            obj_low=obj_low,
+            obj_high=obj_high,
+            goal_low=goal_low,
+            goal_high=goal_high,
             model_name=self.model_name,
             **kwargs
         )
@@ -22,8 +31,8 @@ class SawyerPushEnv(SawyerRandGoalEnv):
 
     def step(self, action):
         ob, _, done, _ = super().step(action)
-        reward, reachDist, placeDist  = self.compute_rewards(action, ob)
-        return ob, reward, done, {'reachDist':reachDist, 'placeDist': placeDist, 'epRew': reward}
+        reward, reachDist, placeDist, cosDist  = self.compute_rewards(action, ob)
+        return ob, reward, done, {'reachDist':reachDist, 'placeDist': placeDist, 'cosDist': cosDist, 'epRew': reward}
 
     def reset_model(self):
         super().reset_model()
@@ -39,9 +48,12 @@ class SawyerPushEnv(SawyerRandGoalEnv):
         objPos = self.get_body_com("obj")
         fingerCOM = (rightFinger + leftFinger)/2
 
-        c1 = 1 ; c2 = 1
-        reachDist = np.linalg.norm(objPos - fingerCOM)    
+        reachDist = np.linalg.norm(objPos - fingerCOM)
         placeDist = np.linalg.norm(objPos - placingGoal)
+
+        v1 = placingGoal - objPos
+        v2 = objPos - fingerCOM
+        cosDist = v1.dot(v2) / (reachDist * placeDist)
 
         if self.rewMode == 'normal':
             reward = -reachDist - placeDist
@@ -49,4 +61,7 @@ class SawyerPushEnv(SawyerRandGoalEnv):
         elif self.rewMode == 'posPlace':
             reward = -reachDist + 100* max(0, self.origPlacingDist - placeDist)
 
-        return reward, reachDist, placeDist
+        elif self.rewMode == 'angle':
+            reward = -reachDist - placeDist + 0.1 * cosDist
+
+        return reward, reachDist, placeDist, cosDist
