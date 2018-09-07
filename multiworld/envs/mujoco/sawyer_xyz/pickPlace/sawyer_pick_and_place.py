@@ -6,22 +6,23 @@ from multiworld.envs.env_util import get_stat_in_paths, \
 from multiworld.core.multitask_env import MultitaskEnv
 from multiworld.envs.mujoco.sawyer_xyz.base import SawyerRandGoalEnv
 
-class SawyerPickPlaceEnv(RandGoalEnv):
+class SawyerPickPlaceEnv(SawyerRandGoalEnv):
     def __init__(
             self,
-            liftThresh = 0.04,
-            rewMode = 'orig',
-            objType = 'block',
+            liftThresh=0.04,
+            rewMode='orig',
+            objType='block',
             **kwargs
     ):
+        self.objType = objType
+        
         self.quick_init(locals())
-        SawyerXYZEnv.__init__(
+        SawyerRandGoalEnv.__init__(
             self,
             model_name=self.model_name,
             **kwargs
         )
 
-        self.objType = objType
         self.liftThresh = liftThresh
 
         self.heightTarget = self.objHeight + self.liftThresh

@@ -10,8 +10,8 @@ class SawyerPushSimpleEnv(SawyerRandGoalEnv):
             self,
             obj_low=(-0.1, 0.5, 0.02),
             obj_high=(0.1, 0.5, 0.02),
-            goal_low=(-0.2, 0.7, 0.02),
-            goal_high=(0.2, 0.7, 0.02),
+            goal_low=(-0.1, 0.7, 0.02),
+            goal_high=(0.1, 0.7, 0.02),
             hand_init_pos = (0, 0.4, 0.05),
             rewMode='angle',
             **kwargs

@@ -1,14 +1,12 @@
 import abc
 import numpy as np
-
-# import ipdb
-# ipdb.set_trace()
 import mujoco_py
-
 from multiworld.core.serializable import Serializable
 from multiworld.envs.mujoco.mujoco_env import MujocoEnv
-
 from multiworld.envs.env_util import quat_to_zangle, zangle_to_quat
+from gym.spaces import Box, Dict
+from multiworld.envs.env_util import get_stat_in_paths, \
+    create_stats_ordered_dict, get_asset_full_path
 
 import copy
 
@@ -60,7 +58,6 @@ class SawyerMocapBase(MujocoEnv, Serializable, metaclass=abc.ABCMeta):
         self.data.set_mocap_pos('mocap', mocap_pos)
         self.data.set_mocap_quat('mocap', mocap_quat)
         self.sim.forward()
-
 
 class SawyerXYZEnv(SawyerMocapBase, metaclass=abc.ABCMeta):
     def __init__(
@@ -128,7 +125,6 @@ class SawyerRandGoalEnv(SawyerXYZEnv):
     ):        
         SawyerXYZEnv.__init__(
             self,
-            model_name=self.model_name,
             **kwargs
         )
         obj_low = np.array(obj_low)
@@ -200,6 +196,10 @@ class SawyerRandGoalEnv(SawyerXYZEnv):
 
     def get_obj_pos(self):
         return self.data.get_body_xpos('obj').copy()
+
+    def get_site_pos(self, siteName):
+        _id = self.model.site_names.index(siteName)
+        return self.data.site_xpos[_id].copy()
 
     def _set_goal_marker(self, goal):
         """
