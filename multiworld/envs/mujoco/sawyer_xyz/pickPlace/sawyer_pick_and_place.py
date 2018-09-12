@@ -10,32 +10,19 @@ class SawyerPickPlaceEnv(SawyerRandGoalEnv):
     def __init__(
             self,
             liftThresh=0.04,
-            rewMode='orig',
-            objType='block',
+            rew_mode='orig',
+            obj_type='block',
             **kwargs
-    ):
-        self.objType = objType
-        
+    ):        
         self.quick_init(locals())
         SawyerRandGoalEnv.__init__(
             self,
-            model_name=self.model_name,
+            obj_type=obj_type,
             **kwargs
         )
-
         self.liftThresh = liftThresh
-
         self.heightTarget = self.objHeight + self.liftThresh
-        self.rewMode = rewMode
-
-    @property
-    def model_name(self):
-        if self.objType == 'block':
-            return get_asset_full_path('sawyer_xyz/sawyer_pick_and_place.xml')
-        elif self.objType == 'fox':
-            return get_asset_full_path('sawyer_xyz/pickPlace_fox.xml')
-        else:
-            raise AssertionError('Obj Type must be block or fox')
+        self.rew_mode = rew_mode
 
     def step(self, action):
         ob, _, done, _ = super().step(action)
@@ -126,11 +113,11 @@ class SawyerPickPlaceEnv(SawyerRandGoalEnv):
                 return [0 , placingDist]
 
         reachRew, reachDist = reachReward()
-        if self.rewMode == 'orig':
+        if self.rew_mode == 'orig':
             pickRew = orig_pickReward()
             placeRew , placingDist = placeReward(cond = self.pickCompleted and (graspDist < 0.1) and not(objDropped()))
         else:
-            assert(self.rewMode == 'general')
+            assert(self.rew_mode == 'general')
             pickRew = general_pickReward()
             placeRew , placingDist = placeReward(cond = self.pickCompleted and grasped())
 

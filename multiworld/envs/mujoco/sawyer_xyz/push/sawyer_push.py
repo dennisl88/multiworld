@@ -8,17 +8,17 @@ from multiworld.envs.mujoco.sawyer_xyz.base import SawyerRandGoalEnv
 class SawyerPushEnv(SawyerRandGoalEnv):
     def __init__(
             self,
-            rewMode='posPlace',
+            rew_mode='posPlace',
+            obj_type='puck',
             **kwargs
     ):
         self.quick_init(locals())
-        
         SawyerRandGoalEnv.__init__(
             self,
-            model_name=self.model_name,
+            obj_type='puck',
             **kwargs
         )
-        self.rewMode = rewMode
+        self.rew_mode = rew_mode
 
     def step(self, action):
         ob, _, done, _ = super().step(action)
@@ -43,10 +43,10 @@ class SawyerPushEnv(SawyerRandGoalEnv):
         reachDist = np.linalg.norm(objPos - fingerCOM)    
         placeDist = np.linalg.norm(objPos - placingGoal)
 
-        if self.rewMode == 'normal':
+        if self.rew_mode == 'normal':
             reward = -reachDist - placeDist
 
-        elif self.rewMode == 'posPlace':
+        elif self.rew_mode == 'posPlace':
             reward = -reachDist + 100* max(0, self.origPlacingDist - placeDist)
 
         return reward, reachDist, placeDist

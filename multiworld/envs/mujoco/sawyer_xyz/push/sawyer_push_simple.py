@@ -8,26 +8,26 @@ from multiworld.envs.mujoco.sawyer_xyz.base import SawyerRandGoalEnv
 class SawyerPushSimpleEnv(SawyerRandGoalEnv):
     def __init__(
             self,
-            obj_low=(-0.1, 0.5, 0.02),
-            obj_high=(0.1, 0.5, 0.02),
+            obj_low=(-0.0, 0.5, 0.02),
+            obj_high=(0.0, 0.5, 0.02),
             goal_low=(-0.1, 0.7, 0.02),
             goal_high=(0.1, 0.7, 0.02),
             hand_init_pos = (0, 0.4, 0.05),
-            rewMode='angle',
+            rew_mode='angle',
+            obj_type='puck',
             **kwargs
     ):
         self.quick_init(locals())
-        
         SawyerRandGoalEnv.__init__(
             self,
             obj_low=obj_low,
             obj_high=obj_high,
             goal_low=goal_low,
             goal_high=goal_high,
-            model_name=self.model_name,
+            obj_type=obj_type,
             **kwargs
         )
-        self.rewMode = rewMode
+        self.rew_mode = rew_mode
 
     def step(self, action):
         ob, _, done, _ = super().step(action)
@@ -55,13 +55,13 @@ class SawyerPushSimpleEnv(SawyerRandGoalEnv):
         v2 = objPos - fingerCOM
         cosDist = v1.dot(v2) / (reachDist * placeDist)
 
-        if self.rewMode == 'normal':
+        if self.rew_mode == 'normal':
             reward = -reachDist - placeDist
 
-        elif self.rewMode == 'posPlace':
+        elif self.rew_mode == 'posPlace':
             reward = -reachDist + 100* max(0, self.origPlacingDist - placeDist)
 
-        elif self.rewMode == 'angle':
+        elif self.rew_mode == 'angle':
             reward = -reachDist - placeDist + 0.1 * cosDist
 
         return reward, reachDist, placeDist, cosDist

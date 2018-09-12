@@ -121,10 +121,14 @@ class SawyerRandGoalEnv(SawyerXYZEnv):
             goal_low=(-0.2, 0.5, 0.02),
             goal_high=(0.2, 0.7, 0.02),
             hand_init_pos = (0, 0.4, 0.05),
+            obj_type='block',
             **kwargs
-    ):        
+    ):  
+        self.objType = obj_type
+
         SawyerXYZEnv.__init__(
             self,
+            model_name=self.model_name,
             **kwargs
         )
         obj_low = np.array(obj_low)
@@ -157,7 +161,14 @@ class SawyerRandGoalEnv(SawyerXYZEnv):
 
     @property
     def model_name(self):
-        return get_asset_full_path('sawyer_xyz/sawyer_pick_and_place.xml')
+        if self.objType == 'block':
+            return get_asset_full_path('sawyer_xyz/sawyer_pick_and_place.xml')
+        elif self.objType == 'puck':
+            return get_asset_full_path('sawyer_xyz/sawyer_push_puck.xml')
+        elif self.objType == 'fox':
+            return get_asset_full_path('sawyer_xyz/pickPlace_fox.xml')
+        else:
+            raise AssertionError('Obj Type must be block or fox')
 
     def viewer_setup(self):
         self.viewer.cam.trackbodyid = 0
